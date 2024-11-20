@@ -323,10 +323,10 @@ struct WinSelector: View {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             panel.setFrame(cg2ns(cgRect: window.frame, display: display), display: true)
-            /*if let id = window.owningApplication?.bundleIdentifier {
+            if let id = window.owningApplication?.bundleIdentifier {
                 NSApp.activate(ignoringOtherApps: true)
                 bringAppToFront(bundleIdentifier: id)
-            }*/
+            }
         }
     }
 }
