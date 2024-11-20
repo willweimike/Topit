@@ -1,0 +1,19 @@
+/* 
+  Localizable.strings
+  Topit
+
+  Created by apple on 2024/11/19.
+  
+*/
+
+"Check for Updates…" = "检查更新…";
+"Automatically check for updates" = "自动检查程序更新";
+"Automatically download updates" = "自动下载程序更新";
+"Show Windows with No Title" = "显示无标题窗口";
+"Refresh" = "刷新";
+" Topit! " = "立即置顶";
+"OK" = "好";
+"Close" = "关闭";
+" Tips" = " 小贴士";
+"Don't remind me again" = "不再提醒";
+"Topit uses the accessibility permissions\nand screen recording permissions\nto control and capture your windows." = "Topit 利用屏幕录制权限和辅助功能权限\n来捕获并控制窗口, 请务必同意授权.";
