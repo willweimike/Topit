@@ -3,6 +3,30 @@
     <channel>
         <title>Topit</title>
         <item>
+            <title>v0.1.1</title>
+            <pubDate>Sat, 23 Nov 2024 23:04:59 +0800</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>12.3</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <style>ul{margin-top: 0;margin-bottom: 7;padding-left: 18;}</style><ul>
+                <li>最低系统要求放宽至 macOS 12.3</li>
+                <li>支持显示或隐藏菜单栏 / 程序坞图标</li>
+                <li>支持使用快捷键来快速置顶任意窗口</li>
+                <li>支持配置更多窗口属性以及App过滤列表</li>
+                </ul><ul>
+                <li>The minimum system requirement is set to macOS 12.3</li>
+                <li>Supports displaying or hiding Menu Bar / Dock icon.</li>
+                <li>Supports using hotkey to quickly pin / unpin any window.</li>
+                <li>Supports configuration of more window properties and App filter.</li>
+                </ul><img src="https://github.com/lihaoyun6/Topit/raw/main/img/donate.png" width="250"/>
+            ]]></description>
+            <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.1/Topit_v0.1.1.dmg" length="2133191" type="application/octet-stream" sparkle:edSignature="bvdle+kHltpxw51bX/c9uy8lKcJUioi6lQDgEVOFAaLenJSQ5LwTNC+Kr9nP+7pM1/C7nSnCCr/nmKmmNWTwDQ=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.1/Update11-10.delta" sparkle:deltaFrom="10" length="532614" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="kYynRwMxwcgN4HTaVMIuDNvIckwuLdP0bkLOn6HcCbJS1JK4ASjzOrfN66jDvsbmOy94cDZswp1cy3R4ZumvAw=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>v0.1.0</title>
             <pubDate>Wed, 20 Nov 2024 23:38:40 +0800</pubDate>
             <sparkle:version>10</sparkle:version>
