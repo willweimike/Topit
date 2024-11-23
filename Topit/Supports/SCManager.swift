@@ -11,6 +11,7 @@ import ScreenCaptureKit
 class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStreamOutput {
     @Published var videoLayer: AVSampleBufferDisplayLayer = AVSampleBufferDisplayLayer()
     @Published var capturing: Bool = false
+    @AppStorage("maxFps") private var maxFps: Int = 65535
     private var stream: SCStream?
     private var configuration: SCStreamConfiguration!
     private var filter: SCContentFilter!
@@ -38,11 +39,11 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
             configuration = SCStreamConfiguration()
             configuration.pixelFormat = kCVPixelFormatType_32BGRA
             configuration.colorSpaceName = CGColorSpace.sRGB
-            let frameRate = display.nsScreen?.maximumFramesPerSecond ?? 60
+            let frameRate = min(maxFps, display.nsScreen?.maximumFramesPerSecond ?? 60)
             configuration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
             configuration.showsCursor = false
-            configuration.capturesAudio = false
-            
+            if #available (macOS 13, *) { configuration.capturesAudio = false }
+
             filter = SCContentFilter(desktopIndependentWindow: window)
             if #available(macOS 14, *) {
                 configuration.width = Int(filter.contentRect.width) * Int(filter.pointPixelScale)
@@ -68,6 +69,9 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
         let pointPixelScaleOld = screen?.backingScaleFactor ?? 2
         configuration.width = Int(newWidth * pointPixelScaleOld)
         configuration.height = Int(newHeight * pointPixelScaleOld)
+        
+        let frameRate = min(maxFps, screen?.maximumFramesPerSecond ?? 60)
+        configuration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
 
         stream?.updateConfiguration(configuration) { error in
             if let error = error {
@@ -91,22 +95,24 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
     }
 }
 
-class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCStreamOutput {
-    @Published var windowThumbnails = [SCDisplay:[WindowThumbnail]]()
-    @Published var isReady = false
-    private var allWindows = [SCWindow]()
-    private var streams = [SCStream]()
-    private var availableContent: SCShareableContent?
-    private let excludedApps = ["", "com.apple.dock", "com.apple.screencaptureui", "com.apple.controlcenter", "com.apple.notificationcenterui", "com.apple.systemuiserver", "com.apple.WindowManager", "dev.mnpn.Azayaka", "com.gaosun.eul", "com.pointum.hazeover", "net.matthewpalmer.Vanilla", "com.dwarvesv.minimalbar", "com.bjango.istatmenus.status"]
+class SCManager {
+    static var availableContent: SCShareableContent?
+    static private let excludedApps = ["", "com.apple.dock", "com.apple.screencaptureui", "com.apple.controlcenter", "com.apple.notificationcenterui", "com.apple.systemuiserver", "com.apple.WindowManager", "dev.mnpn.Azayaka", "com.gaosun.eul", "com.pointum.hazeover", "net.matthewpalmer.Vanilla", "com.dwarvesv.minimalbar", "com.bjango.istatmenus.status", "com.macpaw.CleanMyMac4"]
     
-    override init() {
-        super.init()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.setupStreams()
+    static func updateAvailableContentSync() -> SCShareableContent? {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: SCShareableContent? = nil
+
+        updateAvailableContent { content in
+            result = content
+            semaphore.signal()
         }
+
+        semaphore.wait()
+        return result
     }
     
-    private func updateAvailableContent(completion: @escaping (SCShareableContent?) -> Void) {
+    static func updateAvailableContent(completion: @escaping (SCShareableContent?) -> Void) {
         SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) { [self] content, error in
             if let error = error {
                 switch error {
@@ -131,8 +137,13 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
         }
     }
     
-    private func getWindows() -> [SCWindow] {
+    static func getWindows() -> [SCWindow] {
         guard let content = availableContent else { return [] }
+        var appBlackList = [String]()
+        if let savedData = ud.data(forKey: "hiddenApps"),
+           let decodedApps = try? JSONDecoder().decode([AppInfo].self, from: savedData) {
+            appBlackList = (decodedApps as [AppInfo]).map({ $0.bundleID })
+        }
         var windows = [SCWindow]()
         windows = content.windows.filter {
             guard let app =  $0.owningApplication,
@@ -140,12 +151,27 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
                 return false
             }
             return !excludedApps.contains(app.bundleIdentifier)
+            && !appBlackList.contains(app.bundleIdentifier)
             && !title.contains("Item-0")
-            && title != "Window"
+            //&& title != "Window"
             && $0.frame.width > 40
             && $0.frame.height > 40
         }
         return windows
+    }
+}
+
+class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCStreamOutput {
+    @Published var windowThumbnails = [SCDisplay:[WindowThumbnail]]()
+    @Published var isReady = false
+    private var allWindows = [SCWindow]()
+    private var streams = [SCStream]()
+    
+    override init() {
+        super.init()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.setupStreams()
+        }
     }
     
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
@@ -162,7 +188,7 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
         if let index = streams.firstIndex(of: stream), index + 1 <= allWindows.count {
             let currentWindow = allWindows[index]
             let thumbnail = WindowThumbnail(image: nsImage, window: currentWindow)
-            guard let displays = availableContent?.displays.filter({ NSIntersectsRect(currentWindow.frame, $0.frame) }) else {
+            guard let displays = SCManager.availableContent?.displays.filter({ NSIntersectsRect(currentWindow.frame, $0.frame) }) else {
                 self.streams[index].stopCapture()
                 return
             }
@@ -175,18 +201,18 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
                     }
                 }
             }
-            streams[index].stopCapture()
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { self.streams[index].stopCapture() }
             if index + 1 == streams.count { DispatchQueue.main.async { self.isReady = true }}
         }
     }
 
     func setupStreams(filter: Bool = false, capture: Bool = true) {
-        updateAvailableContent {[self] availableContent in
+        SCManager.updateAvailableContent {[self] availableContent in
             Task {
                 do {
                     streams.removeAll()
                     DispatchQueue.main.async { self.windowThumbnails.removeAll() }
-                    allWindows = getWindows().filter({
+                    allWindows = SCManager.getWindows().filter({
                         !($0.title == "" && $0.owningApplication?.bundleIdentifier == "com.apple.finder")
                         && $0.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier
                         && $0.owningApplication?.applicationName != ""

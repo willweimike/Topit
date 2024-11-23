@@ -6,6 +6,7 @@
   
 */
 
+"Update" = "更新设置";
 "Check for Updates…" = "检查更新…";
 "Automatically check for updates" = "自动检查程序更新";
 "Automatically download updates" = "自动下载程序更新";
@@ -13,7 +14,41 @@
 "Refresh" = "刷新";
 " Topit! " = "立即置顶";
 "OK" = "好";
-"Close" = "关闭";
+"Close" = "关闭窗口";
+"Unpin" = "解除置顶";
+"Quit" = "退出";
+"Topit Settings" = "Topit 设置";
+"General" = "一般设置";
+"Launch at Login" = "登录时启动";
+"Show Topit on Dock" = "在程序坞中显示 Topit";
+"Show Topit on Menu Bar" = "在菜单栏上显示 Topit";
+"Windows" = "窗口设置";
+"Floating on Top of Full-screen Apps" = "允许 Topit 显示在全屏应用之上";
+"Show Close Button" = "显示 \"关闭窗口\" 按钮";
+"Show Unpin Button" = "显示 \"解除置顶\" 按钮";
+"Show Window Shadow" = "显示窗口阴影";
+"Maximum Refresh Rate" = "最高刷新率限制";
+"No Limit" = "不限制";
+"Hotkey" = "快捷键设置";
+"Pin / Unpin Under-mouse Window" = "将鼠标所指的窗口置顶 / 解除置顶";
+"Unpin All Pinned Windows" = "解除所有置顶窗口";
+"App Filter" = "App 过滤器";
 " Tips" = " 小贴士";
 "Don't remind me again" = "不再提醒";
 "Topit uses the accessibility permissions\nand screen recording permissions\nto control and capture your windows." = "Topit 利用屏幕录制权限和辅助功能权限\n来捕获并控制窗口, 请务必同意授权.";
+"macOS will prevent any notifications from appearing while Topit is running\nIt's not a bug or Topit's fault!" = "当使用 Topit 对任意窗口进行置顶时\nmacOS 会暂停弹出来自任何应用的通知\n此限制来自 macOS 本身, 不是 Topit 的错";
+"Sorry" = "很抱歉";
+"You can only pin one window on macOS Monterey." = "在 macOS 12 系统上只支持置顶一个窗口.";
+"OK" = "好";
+"screen recording permissions" = "屏幕录制权限";
+"accessibility permissions" = "辅助功能权限";
+"accessibility and screen recording permissions" = "辅助功能和屏幕录制权限";
+"You haven't enabled %@ for Topit!\nPlease restart Topit after enabling it." = "尚未为 Topit 启用%@\n请在授权后重新启动 Topit";
+"Permission Error" = "权限错误";
+"Pin Window to Top" = "置顶一个窗口";
+"Unpin All Windows" = "解除所有置顶窗口";
+"About Topit" = "关于 Topit";
+"Settings…" = "设置…";
+"Quit Topit" = "退出 Topit";
+"Error" = "错误";
+"This window is not available!" = "此窗口目前不可用!";
