@@ -27,6 +27,7 @@ struct OverlayView12: View {
     
     @AppStorage("showCloseButton") private var showCloseButton: Bool = true
     @AppStorage("showUnpinButton") private var showUnpinButton: Bool = true
+    @AppStorage("mouseOverAction") private var mouseOverAction: Bool = true
     @AppStorage("miniButton") private var miniButton: Bool = true
     @AppStorage("buttonPosition") private var buttonPosition: Int = 0
     
@@ -62,6 +63,16 @@ struct OverlayView12: View {
                             }
                         )
                     )
+                    .onTapGesture {
+                        if !mouseOverAction {
+                            if let id = window.owningApplication?.bundleIdentifier, let win = nsWindow {
+                                activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame, display: display))
+                                NSApp.activate(ignoringOtherApps: true)
+                                bringAppToFront(bundleIdentifier: id)
+                                withAnimation(.easeOut(duration: 0.1)) { opacity = 0 }
+                            }
+                        }
+                    }
             }.opacity(opacity)
             if !resizing {
                 HStack {
@@ -149,8 +160,8 @@ struct OverlayView12: View {
         let mouseInWindow = windowFrame.contains(NSPoint(x: mouseLocation.x, y: mouseLocation.y))
         if resizing { return }
         if mouseInWindow {
-            if overView == mouseInWindow { return }
             nsWindow?.makeKeyAndOrderFront(self)
+            if overView == mouseInWindow || !mouseOverAction { return }
             if let id = window.owningApplication?.bundleIdentifier, let win = nsWindow {
                 activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame, display: display))
                 NSApp.activate(ignoringOtherApps: true)

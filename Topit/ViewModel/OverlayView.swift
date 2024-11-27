@@ -51,6 +51,7 @@ struct OverlayView: View {
     @AppStorage("showCloseButton") private var showCloseButton: Bool = true
     @AppStorage("showUnpinButton") private var showUnpinButton: Bool = true
     @AppStorage("showPauseButton") private var showPauseButton: Bool = true
+    @AppStorage("mouseOverAction") private var mouseOverAction: Bool = true
     @AppStorage("splitButtons") private var splitButtons: Bool = false
     @AppStorage("buttonPosition") private var buttonPosition: Int = 0
     
@@ -80,6 +81,19 @@ struct OverlayView: View {
                             }
                         )
                     )
+                    .onTapGesture {
+                        if !mouseOverAction {
+                            nsWindow?.level = .floating
+                            nsWindow?.makeKeyAndOrderFront(self)
+                            if let id = window.owningApplication?.bundleIdentifier, let win = nsWindow {
+                                activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame, display: display))
+                                NSApp.activate(ignoringOtherApps: true)
+                                bringAppToFront(bundleIdentifier: id)
+                                withAnimation(.easeOut(duration: 0.1)) { opacity = 0 }
+                            }
+                            stopCapture()
+                        }
+                    }
             }.opacity(opacity)
             if !resizing {
                 Group {
@@ -249,6 +263,7 @@ struct OverlayView: View {
             if hovering {
                 nsWindow?.level = .floating
                 nsWindow?.makeKeyAndOrderFront(self)
+                if !mouseOverAction { return }
                 if let id = window.owningApplication?.bundleIdentifier, let win = nsWindow {
                     activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame, display: display))
                     NSApp.activate(ignoringOtherApps: true)

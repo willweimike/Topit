@@ -8,6 +8,11 @@
 import SwiftUI
 import ScreenCaptureKit
 
+func getAllCGWindow() {
+    guard let windowList = CGWindowListCopyWindowInfo([.excludeDesktopElements,.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return }
+    SCManager.CGWindowList = windowList
+}
+
 func getScreenWithMouse() -> NSScreen? {
     let mouseLocation = NSEvent.mouseLocation
     let screenWithMouse = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) })
@@ -39,10 +44,14 @@ func getAppIcon(_ app: SCRunningApplication) -> NSImage? {
 }
 
 func createNewWindow(display: SCDisplay, window: SCWindow) {
-    //@AppStorage("hasShadow") var hasShadow: Bool = true
     @AppStorage("fullScreenFloating") var fullScreenFloating: Bool = true
     
-    let panel = NNSPanel(contentRect: CGRectTransform(cgRect: window.frame, display: display), styleMask: [.closable, .nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
+    var panel: NSWindow!
+    if let p = NSApp.windows.first(where: { $0.title == "Topit Layer\(window.windowID)" }) {
+        panel = p
+    } else {
+        panel = NNSPanel(contentRect: CGRectTransform(cgRect: window.frame, display: display), styleMask: [.closable, .nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
+    }
     var contentView: NSView!
     if #unavailable(macOS 13) {
         contentView = NSHostingView(rootView: OverlayView12(display: display, window: window))

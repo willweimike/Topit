@@ -94,21 +94,26 @@ struct WindowView: View {
     @AppStorage("splitButtons") private var splitButtons: Bool = false
     @AppStorage("buttonPosition") private var buttonPosition: Int = 0
     @AppStorage("fullScreenFloating") private var fullScreenFloating: Bool = true
+    @AppStorage("mouseOverAction") private var mouseOverAction: Bool = true
     @AppStorage("maxFps") private var maxFps: Int = 65535
     
     var body: some View {
         SForm(spacing: 10) {
             SGroupBox(label: "Windows") {
-                SToggle("Floating on Top of Full-screen Apps", isOn: $fullScreenFloating)
+                SPicker("Activate Pinned Window on", selection: $mouseOverAction,
+                        tips: "When you select \"Left Click\" as the way to activate a window, you need to activate the window before moving it.") {
+                    Text("Cursor Hover").tag(true)
+                    Text("Left Click").tag(false)
+                }
                 SDivider()
-                //SToggle("Show Window Shadow", isOn: $hasShadow)
-                //SDivider()
                 SPicker("Maximum Refresh Rate", selection: $maxFps) {
                     Text("30 Hz").tag(30)
                     Text("60 Hz").tag(60)
                     Text("120 Hz").tag(120)
                     Text("No Limit").tag(65535)
                 }
+                SDivider()
+                SToggle("On Top of Full-screen App", isOn: $fullScreenFloating)
             }
             SGroupBox {
                 SPicker("Control Button Position", selection: $buttonPosition) {

@@ -51,9 +51,8 @@ class WindowHighlighter {
     var mask: EscPanel?
     
     func registerMouseMonitor() {
-        DispatchQueue.main.async {
-            tips("Click on the window you want to pin\nor press Esc to cancel.".local, id: "topit.how-to-select.note")
-        }
+        DispatchQueue.main.async { tips("Click on the window you want to pin\nor press Esc to cancel.".local, id: "topit.how-to-select.note") }
+        
         for screen in NSScreen.screens {
             let cover = EscPanel(contentRect: screen.frame, styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
             cover.contentView = NSHostingView(rootView: CoverView())
@@ -66,6 +65,8 @@ class WindowHighlighter {
             cover.title = "Topit Screen Cover"
             cover.orderFront(self)
         }
+        
+        getAllCGWindow()
         
         if mouseMonitor == nil {
             mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in self.updateMask() }

@@ -23,11 +23,14 @@
 "Show Topit on Dock" = "在程序坞中显示 Topit";
 "Show Topit on Menu Bar" = "在菜单栏上显示 Topit";
 "Windows" = "窗口设置";
-"Floating on Top of Full-screen Apps" = "允许 Topit 显示在全屏应用之上";
+"On Top of Full-screen App" = "显示在全屏应用上层";
+"Activate Pinned Window on" = "何时激活置顶窗口";
+"Cursor Hover" = "鼠标悬停";
+"Left Click" = "左键单击";
 "Show Close Button" = "显示 \"关闭窗口\" 按钮";
 "Show Unpin Button" = "显示 \"解除置顶\" 按钮";
 "Show Window Shadow" = "显示窗口阴影";
-"Maximum Refresh Rate" = "最高刷新率限制";
+"Maximum Refresh Rate" = "最大捕获帧率限制";
 "No Limit" = "不限制";
 "Hotkey" = "快捷键设置";
 "Select a Window to Pin" = "选择要置顶的窗口";
@@ -70,3 +73,4 @@
 "Top Trailing" = "右上角";
 "Bottom Leading" = "左下角";
 "Bottom Trailing" = "右下角";
+"When you select \"Left Click\" as the way to activate a window, you need to activate the window before moving it." = "当使用 \"左键单击\" 作为窗口激活方式时, 如果想移动置顶窗口, 必须先将其激活.";

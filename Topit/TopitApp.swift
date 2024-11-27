@@ -84,23 +84,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             WindowHighlighter.shared.registerMouseMonitor()
         }
         KeyboardShortcuts.onKeyDown(for: .pinUnpin) {
+            getAllCGWindow()
             if let window = getWindowUnderMouse(),
                let windowID = window["kCGWindowNumber"] as? UInt32,
                let app = window["kCGWindowOwnerName"] as? String, app != "Topit" {
-                SCManager.updateAvailableContent { content in
-                    if let scWindow = SCManager.getWindows().first(where: { $0.windowID == windowID }),
-                       let scDisplay = getSCDisplayWithMouse(){
-                        DispatchQueue.main.async {
-                            let allLayerWindows = NSApp.windows.filter({ $0.title.hasPrefix("Topit Layer") && $0.isVisible})
-                            let frameNow = CGRectTransform(cgRect: scWindow.frame)
-                            if allLayerWindows.map(\.frame).contains(CGRectTransform(cgRect: scWindow.frame)) {
-                                NSApp.windows.first(where: {
-                                    $0.frame == frameNow && $0.title == "Topit Layer\(scWindow.windowID)"
-                                })?.close()
-                            } else {
-                                closeMainWindow()
-                                createNewWindow(display: scDisplay, window: scWindow)
-                            }
+                if let _ = SCManager.updateAvailableContentSync(), let scDisplay = getSCDisplayWithMouse() {
+                    if SCManager.pinnedWdinwows.contains(where: { $0.windowID == windowID }) {
+                        for w in NSApp.windows.filter({ $0.title == "Topit Layer\(windowID)" }) { w.close() }
+                    } else {
+                        if let scWindow = SCManager.getWindows().first(where: { $0.windowID == windowID }) {
+                            closeMainWindow()
+                            createNewWindow(display: scDisplay, window: scWindow)
                         }
                     }
                 }
@@ -147,10 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func loopFireHandler() {
-        if !SCManager.pinnedWdinwows.isEmpty || WindowHighlighter.shared.mouseMonitor != nil {
-            guard let windowList = CGWindowListCopyWindowInfo([.excludeDesktopElements,.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return }
-            SCManager.CGWindowList = windowList
-        }
+        if !SCManager.pinnedWdinwows.isEmpty || WindowHighlighter.shared.mouseMonitor != nil { getAllCGWindow() }
     }
     
     @objc func checkForUpdates() {
