@@ -16,9 +16,9 @@ let statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.varia
 
 var isMacOS13 = false
 var isMacOS12 = false
-var singleLayer = false
 var axPerm = false
 var scPerm = false
+var mainTimer: Timer?
 
 @main
 struct TopitApp: App {
@@ -63,21 +63,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = NSImage(named: "statusIcon")
         }
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Pin Window to Top".local, action: #selector(openFromMenuBar), keyEquivalent: "p"))
-        menu.addItem(NSMenuItem(title: "Unpin All Windows".local, action: #selector(unPinAll), keyEquivalent: "u"))
+        menu.addItem(withTitle: "Pin a Window".local, action: #selector(selectWindowToPin), keyEquivalent: "p")
+        menu.addItem(withTitle: "Unpin all Windows".local, action: #selector(unPinAll), keyEquivalent: "u")
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Settings…".local, action: #selector(settings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "Check for Updates…".local, action: #selector(checkForUpdates), keyEquivalent: ""))
-        //menu.addItem(NSMenuItem(title: "About Topit".local, action: #selector(about), keyEquivalent: ""))
+        menu.addItem(withTitle: "Window Selector".local, action: #selector(openFromMenuBar), keyEquivalent: "s")
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit Topit".local, action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
+        menu.addItem(withTitle: "Settings…".local, action: #selector(settings), keyEquivalent: ",")
+        menu.addItem(withTitle: "Check for Updates…".local, action: #selector(checkForUpdates), keyEquivalent: "")
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Quit Topit".local, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusBarItem.menu = menu
         statusBarItem.isVisible = showMenubar
         
         KeyboardShortcuts.onKeyDown(for: .unpinAll) { self.unPinAll() }
+        KeyboardShortcuts.onKeyDown(for: .openMainPanel) {
+            _ = self.applicationShouldHandleReopen(NSApp, hasVisibleWindows: false)
+        }
+        KeyboardShortcuts.onKeyDown(for: .selectWindow) {
+            closeMainWindow()
+            WindowHighlighter.shared.registerMouseMonitor()
+        }
         KeyboardShortcuts.onKeyDown(for: .pinUnpin) {
             if let window = getWindowUnderMouse(),
-               let windowID = window["kCGWindowNumber"] as? UInt32 {
+               let windowID = window["kCGWindowNumber"] as? UInt32,
+               let app = window["kCGWindowOwnerName"] as? String, app != "Topit" {
                 SCManager.updateAvailableContent { content in
                     if let scWindow = SCManager.getWindows().first(where: { $0.windowID == windowID }),
                        let scDisplay = getSCDisplayWithMouse(){
@@ -97,6 +106,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+        
+        mainTimer = Timer(timeInterval: 0.1, repeats: true, block: { _ in self.loopFireHandler()})
+        if let timer = mainTimer { RunLoop.main.add(timer, forMode: .common) }
         
         tips("Topit uses the accessibility permissions\nand screen recording permissions\nto control and capture your windows.".local, id: "topit.how-to-use.note")
         tips("macOS will prevent any notifications from appearing while Topit is running\nIt's not a bug or Topit's fault!".local, id: "topit.no-notifications.note")
@@ -127,6 +139,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
     
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Pin a Window".local, action: #selector(selectWindowToPin), keyEquivalent: "")
+        menu.addItem(withTitle: "Unpin all Windows".local, action: #selector(unPinAll), keyEquivalent: "")
+        return menu
+    }
+    
+    @objc func loopFireHandler() {
+        if !SCManager.pinnedWdinwows.isEmpty || WindowHighlighter.shared.mouseMonitor != nil {
+            guard let windowList = CGWindowListCopyWindowInfo([.excludeDesktopElements,.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return }
+            SCManager.CGWindowList = windowList
+        }
+    }
+    
     @objc func checkForUpdates() {
         updaterController.checkForUpdates(nil)
     }
@@ -148,10 +174,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openFromMenuBar() {
         _ = applicationShouldHandleReopen(NSApp, hasVisibleWindows: false)
     }
+    
+    @objc func selectWindowToPin() {
+        closeMainWindow()
+        WindowHighlighter.shared.registerMouseMonitor()
+    }
 }
 
 func closeMainWindow() {
-    NSApp.windows.first(where: { $0.title == "Topit".local })?.close()
+    NSApp.windows.first(where: { $0.title == "Topit" })?.close()
 }
 
 func openAboutPanel() {
@@ -227,6 +258,16 @@ extension NSMenuItem {
 }
 
 class NNSPanel: NSPanel {
+    override var canBecomeKey: Bool {
+        return true
+    }
+}
+
+class EscPanel: NSPanel {
+    override func cancelOperation(_ sender: Any?) {
+        self.close()
+        WindowHighlighter.shared.stopMouseMonitor()
+    }
     override var canBecomeKey: Bool {
         return true
     }

@@ -27,9 +27,14 @@ struct OverlayView12: View {
     
     @AppStorage("showCloseButton") private var showCloseButton: Bool = true
     @AppStorage("showUnpinButton") private var showUnpinButton: Bool = true
+    @AppStorage("miniButton") private var miniButton: Bool = true
+    @AppStorage("buttonPosition") private var buttonPosition: Int = 0
     
     var body: some View {
-        ZStack(alignment: Alignment(horizontal: .leading, vertical: .top)) {
+        ZStack(alignment: Alignment(
+            horizontal: buttonPosition < 2 ? .leading : .trailing,
+            vertical: buttonPosition % 2 == 0 ? .top : .bottom
+        )) {
             Group {
                 ScreenCaptureView(manager: captureManager)
                     .frame(width: windowSize.width, height: windowSize.height)
@@ -37,16 +42,22 @@ struct OverlayView12: View {
                         WindowAccessor(
                             onWindowOpen: { w in
                                 nsWindow = w
-                                if nsWindow != nil {
-                                    singleLayer = true
+                                SCManager.pinnedWdinwows.append(window)
+                                if let w = nsWindow {
                                     nsWindow?.makeKeyAndOrderFront(self)
                                     checkMouseLocation()
+                                    if SCManager.pinnedWdinwows.count > 1 && isMacOS12 {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            let alert = createAlert(title: "Sorry", message: "You can only pin one window on macOS Monterey.", button1: "OK")
+                                            alert.beginSheetModal(for: w) { _ in w.close() }
+                                        }
+                                    }
                                 }
                             },
                             onWindowClose: {
+                                SCManager.pinnedWdinwows.removeAll(where: { $0 === window })
                                 timer?.invalidate()
                                 nsWindow = nil
-                                singleLayer = false
                                 captureManager.stopCapture()
                             }
                         )
@@ -104,7 +115,7 @@ struct OverlayView12: View {
         .onAppear {
             windowSize = window.frame.size
             timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-                if let frame = getCGWindowFrame(windowID: window.windowID) {
+                if let frame = getCGWindowFrameWithID(window.windowID) {
                     let newFrame = CGRectTransform(cgRect: frame, display: display)
                     if newFrame != nsWindow?.frame {
                         opacity = 0

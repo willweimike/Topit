@@ -39,7 +39,7 @@ func getAppIcon(_ app: SCRunningApplication) -> NSImage? {
 }
 
 func createNewWindow(display: SCDisplay, window: SCWindow) {
-    @AppStorage("hasShadow") var hasShadow: Bool = true
+    //@AppStorage("hasShadow") var hasShadow: Bool = true
     @AppStorage("fullScreenFloating") var fullScreenFloating: Bool = true
     
     let panel = NNSPanel(contentRect: CGRectTransform(cgRect: window.frame, display: display), styleMask: [.closable, .nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
@@ -52,11 +52,11 @@ func createNewWindow(display: SCDisplay, window: SCWindow) {
     panel.contentView = contentView
     panel.title = "Topit Layer\(window.windowID)"
     panel.level = .floating
-    panel.hasShadow = hasShadow
+    panel.hasShadow = true
     panel.backgroundColor = .clear
     panel.titleVisibility = .hidden
     panel.titlebarAppearsTransparent = true
-    panel.isMovableByWindowBackground = true
+    panel.isMovableByWindowBackground = false
     panel.isReleasedWhenClosed = false
     if fullScreenFloating { panel.collectionBehavior = [.canJoinAllSpaces] }
     panel.makeKeyAndOrderFront(nil)
@@ -70,35 +70,41 @@ func createNewWindow(display: SCDisplay, window: SCWindow) {
     }
 }
 
+func isFrontmostWindow(appID: pid_t?, windowID: UInt32) -> Bool {
+    guard let appID = appID else { return false }
+    if NSWorkspace.shared.frontmostApplication?.processIdentifier != appID { return false }
+    var windowList = SCManager.CGWindowList
+    windowList = windowList.filter({
+        $0["kCGWindowOwnerPID"] as? pid_t == appID
+        && $0["kCGWindowAlpha"] as? NSNumber != 0
+        && $0["kCGWindowLayer"] as? NSNumber == 0
+    })
+    if #available(macOS 14, *) { windowList.removeFirst() }
+    if let window = windowList.first {
+        if let wid = window["kCGWindowNumber"] as? UInt32, wid == windowID { return true }
+    }
+    return false
+}
+
 func getWindowUnderMouse() -> [String: Any]? {
     let mousePosition = NSEvent.mouseLocation
-
-    guard var windowList = CGWindowListCopyWindowInfo([.excludeDesktopElements,.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else {
-        print("Get window list failed!")
-        return nil
-    }
+    var windowList = SCManager.CGWindowList
     
     var appBlackList = [String]()
     if let savedData = ud.data(forKey: "hiddenApps"),
        let decodedApps = try? JSONDecoder().decode([AppInfo].self, from: savedData) {
         appBlackList = (decodedApps as [AppInfo]).map({ $0.displayName })
     }
-    appBlackList.append("Topit")
+    appBlackList.removeAll(where: { $0 == "Topit" })
     
     windowList = windowList.filter({
         !["SystemUIServer", "Window Server"].contains($0["kCGWindowOwnerName"] as? String)
         && $0["kCGWindowAlpha"] as? NSNumber != 0
         && $0["kCGWindowLayer"] as? NSNumber == 0
     })
+    
     for window in windowList {
-        guard let boundsDict = window["kCGWindowBounds"] as? [String: CGFloat] else { continue }
-
-        let bounds = CGRect(
-            x: boundsDict["X"] ?? 0,
-            y: boundsDict["Y"] ?? 0,
-            width: boundsDict["Width"] ?? 0,
-            height: boundsDict["Height"] ?? 0
-        )
+        guard let bounds = getCGWindowFrame(window: window) else { continue }
         
         if CGRectTransform(cgRect: bounds).contains(mousePosition) {
             if appBlackList.contains(window["kCGWindowOwnerName"] as? String ?? "-") { return nil }
@@ -106,7 +112,6 @@ func getWindowUnderMouse() -> [String: Any]? {
         }
     }
 
-    print("No window under mouse.")
     return nil
 }
 
@@ -145,44 +150,35 @@ func isWindowOnTop(windowID: CGWindowID) -> Bool {
     return windowList.isEmpty
 }
 
-func getCGWindowFrame(windowID: CGWindowID) -> CGRect? {
-    guard let cgWindows = CGWindowListCopyWindowInfo([.optionIncludingWindow], windowID) as? [[String: Any]] else {
-        return nil
-    }
-    if let cgWindow = cgWindows.first {
-        if let boundsDict = cgWindow["kCGWindowBounds"] as? [String: CGFloat],
-           let x = boundsDict["X"], let y = boundsDict["Y"],
-           let width = boundsDict["Width"], let height = boundsDict["Height"] {
-            return CGRect(x: x, y: y, width: width, height: height)
-        }
+func getCGWindowFrame(window: [String: Any]) -> CGRect? {
+    guard let boundsDict = window["kCGWindowBounds"] as? [String: CGFloat] else { return nil }
+    let bounds = CGRect(
+        x: boundsDict["X"] ?? 0,
+        y: boundsDict["Y"] ?? 0,
+        width: boundsDict["Width"] ?? 0,
+        height: boundsDict["Height"] ?? 0
+    )
+    return bounds
+}
+
+func getCGWindowFrameWithID(_ windowID: CGWindowID) -> CGRect? {
+    if let cgWindow = SCManager.CGWindowList.first(where: { $0["kCGWindowNumber"] as? CGWindowID == windowID }),
+       let bounds = getCGWindowFrame(window: cgWindow) {
+        return bounds
     }
     return nil
 }
 
-func getApplication(of windowNumber: Int) -> Int? {
-    // 获取指定窗口的信息
-    guard let windowList = CGWindowListCopyWindowInfo([.optionIncludingWindow], CGWindowID(windowNumber)) as? [[String: Any]] else {
-        return nil
+func getCGWindowWithID(_ windowID: CGWindowID) -> [String: Any]? {
+    if let cgWindow = SCManager.CGWindowList.first(where: { $0["kCGWindowNumber"] as? CGWindowID == windowID }) {
+        return cgWindow
     }
-    
-    // 获取第一个匹配的窗口信息
-    if let windowInfo = windowList.first {
-        // 从窗口信息中提取层级
-        if let windowLayer = windowInfo[kCGWindowLayer as String] as? Int {
-            return windowLayer
-        }
-    }
-    
     return nil
 }
 
 func getAXWindow(windowID: CGWindowID) -> AXUIElement? {
     // 获取窗口的基本信息
-    guard let cgWindows = CGWindowListCopyWindowInfo([.optionIncludingWindow], windowID) as? [[String: Any]] else {
-        return nil
-    }
-    guard let cgWindow = cgWindows.first else {
-        print("No matching CGWindow found!")
+    guard let cgWindow = SCManager.CGWindowList.first(where: { $0["kCGWindowNumber"] as? CGWindowID == windowID }) else {
         return nil
     }
 
@@ -200,15 +196,9 @@ func getAXWindow(windowID: CGWindowID) -> AXUIElement? {
         print("Failed to retrieve AXUIElement windows for application.")
         return nil
     }
-
-    // 提取 CGWindow 的标题、位置和尺寸
+    
+    guard let cgWindowFrame = getCGWindowFrame(window: cgWindow) else { return nil }
     let cgWindowTitle = cgWindow["kCGWindowName"] as? String
-    let cgWindowBounds = cgWindow["kCGWindowBounds"] as? [String: CGFloat]
-    let cgWindowX = cgWindowBounds?["X"] ?? 0
-    let cgWindowY = cgWindowBounds?["Y"] ?? 0
-    let cgWindowWidth = cgWindowBounds?["Width"] ?? 0
-    let cgWindowHeight = cgWindowBounds?["Height"] ?? 0
-    let cgWindowFrame = CGRect(x: cgWindowX, y: cgWindowY, width: cgWindowWidth, height: cgWindowHeight)
 
     // 匹配窗口的 AXUIElement
     for axWindow in windows {

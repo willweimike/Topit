@@ -9,11 +9,13 @@ import SwiftUI
 import ScreenCaptureKit
 
 class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStreamOutput {
-    @Published var videoLayer: AVSampleBufferDisplayLayer = AVSampleBufferDisplayLayer()
-    @Published var capturing: Bool = false
     @AppStorage("maxFps") private var maxFps: Int = 65535
+    
+    @Published var videoLayer: AVSampleBufferDisplayLayer = AVSampleBufferDisplayLayer()
+    @Published var capturError: Bool = false
+    @Published var capturing: Bool = false
     private var stream: SCStream?
-    private var configuration: SCStreamConfiguration!
+    private var configuration: SCStreamConfiguration = SCStreamConfiguration()
     private var filter: SCContentFilter!
     private var scDisplay: SCDisplay!
     
@@ -34,9 +36,9 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
     }
     
     func startCapture(display: SCDisplay, window: SCWindow) async {
+        if stream != nil { return }
         do {
             scDisplay = display
-            configuration = SCStreamConfiguration()
             configuration.pixelFormat = kCVPixelFormatType_32BGRA
             configuration.colorSpaceName = CGColorSpace.sRGB
             let frameRate = min(maxFps, display.nsScreen?.maximumFramesPerSecond ?? 60)
@@ -58,10 +60,38 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
             try stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: .global())
             
             try await stream?.startCapture()
-            DispatchQueue.main.async{ self.capturing = true }
+            DispatchQueue.main.async {
+                self.capturing = true
+                self.capturError = false
+            }
         } catch {
             print("Start capture failed with error: \(error)")
-            DispatchQueue.main.async{ self.capturing = false }
+            DispatchQueue.main.async {
+                self.stream = nil
+                self.capturing = false
+                self.capturError = true
+            }
+        }
+    }
+    
+    func resumeCapture(newWidth: CGFloat, newHeight: CGFloat, screen: NSScreen? = nil) async {
+        if stream != nil { return }
+        updateStreamSize(newWidth: newWidth, newHeight: newHeight, screen: screen)
+        do {
+            stream = SCStream(filter: filter, configuration: configuration, delegate: self)
+            try stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: .global())
+            try await stream?.startCapture()
+            DispatchQueue.main.async {
+                self.capturing = true
+                self.capturError = false
+            }
+        } catch {
+            print("Resume capture failed with error: \(error)")
+            DispatchQueue.main.async {
+                self.stream = nil
+                self.capturing = false
+                self.capturError = true
+            }
         }
     }
     
@@ -74,28 +104,40 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
 
         stream?.updateConfiguration(configuration) { error in
-            if let error = error {
-                print("Failed to update stream configuration: \(error)")
-            }
+            if let error = error { print("Failed to update stream configuration: \(error)") }
         }
     }
     
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         print("Capture stopped with error: \(error)")
-        DispatchQueue.main.async{ self.capturing = false }
+        DispatchQueue.main.async {
+            self.stream = nil
+            self.capturing = false
+            self.capturError = true
+        }
     }
 
     func stopCapture() {
+        if stream == nil { return }
         stream?.stopCapture { error in
-            if let error = error {
-                print("Error when stopping capture: \(error)")
+            DispatchQueue.main.async{
+                self.stream = nil
+                self.capturing = false
+                self.capturError = false
+                self.videoLayer.removeFromSuperlayer()
+                self.videoLayer = AVSampleBufferDisplayLayer()
+                if let error = error {
+                    print("Failed to stop capture: \(error)")
+                    self.capturError = true
+                }
             }
         }
-        DispatchQueue.main.async{ self.capturing = false }
     }
 }
 
 class SCManager {
+    static var CGWindowList = [[String: Any]]()
+    static var pinnedWdinwows = [SCWindow]()
     static var availableContent: SCShareableContent?
     static private let excludedApps = ["", "com.apple.dock", "com.apple.screencaptureui", "com.apple.controlcenter", "com.apple.notificationcenterui", "com.apple.systemuiserver", "com.apple.WindowManager", "dev.mnpn.Azayaka", "com.gaosun.eul", "com.pointum.hazeover", "net.matthewpalmer.Vanilla", "com.dwarvesv.minimalbar", "com.bjango.istatmenus.status", "com.macpaw.CleanMyMac4"]
     
@@ -144,16 +186,14 @@ class SCManager {
            let decodedApps = try? JSONDecoder().decode([AppInfo].self, from: savedData) {
             appBlackList = (decodedApps as [AppInfo]).map({ $0.bundleID })
         }
+        appBlackList.append("Topit")
         var windows = [SCWindow]()
         windows = content.windows.filter {
-            guard let app =  $0.owningApplication,
-                  let title = $0.title else {//, !title.isEmpty else {
-                return false
-            }
+            guard let app = $0.owningApplication, let title = $0.title else { return false }
             return !excludedApps.contains(app.bundleIdentifier)
             && !appBlackList.contains(app.bundleIdentifier)
             && !title.contains("Item-0")
-            //&& title != "Window"
+            && !pinnedWdinwows.contains($0)
             && $0.frame.width > 40
             && $0.frame.height > 40
         }

@@ -47,6 +47,17 @@ struct GeneralView: View {
             SGroupBox(label: "General") {
                 if #available(macOS 13, *) {
                     SToggle("Launch at Login", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { newValue in
+                            do {
+                                if newValue {
+                                    try SMAppService.mainApp.register()
+                                } else {
+                                    try SMAppService.mainApp.unregister()
+                                }
+                            }catch{
+                                print("Failed to \(newValue ? "enable" : "disable") launch at login: \(error.localizedDescription)")
+                            }
+                        }
                     SDivider()
                 }
                 SToggle("Show Topit on Dock", isOn: $showOnDock)
@@ -73,45 +84,59 @@ struct GeneralView: View {
                 closeMainWindow()
             } else { NSApp.setActivationPolicy(.regular) }
         }
-        .onChange(of: launchAtLogin) { newValue in
-            if #available(macOS 13, *) {
-                do {
-                    if newValue {
-                        try SMAppService.mainApp.register()
-                    } else {
-                        try SMAppService.mainApp.unregister()
-                    }
-                }catch{
-                    print("Failed to \(newValue ? "enable" : "disable") launch at login: \(error.localizedDescription)")
-                }
-            }
-        }
     }
 }
 
 struct WindowView: View {
     @AppStorage("showCloseButton") private var showCloseButton: Bool = true
     @AppStorage("showUnpinButton") private var showUnpinButton: Bool = true
-    @AppStorage("hasShadow") private var hasShadow: Bool = true
+    @AppStorage("showPauseButton") private var showPauseButton: Bool = true
+    @AppStorage("splitButtons") private var splitButtons: Bool = false
+    @AppStorage("buttonPosition") private var buttonPosition: Int = 0
     @AppStorage("fullScreenFloating") private var fullScreenFloating: Bool = true
     @AppStorage("maxFps") private var maxFps: Int = 65535
     
     var body: some View {
-        SForm {
+        SForm(spacing: 10) {
             SGroupBox(label: "Windows") {
                 SToggle("Floating on Top of Full-screen Apps", isOn: $fullScreenFloating)
                 SDivider()
-                SToggle("Show Close Button", isOn: $showCloseButton)
-                SDivider()
-                SToggle("Show Unpin Button", isOn: $showUnpinButton)
-                SDivider()
-                SToggle("Show Window Shadow", isOn: $hasShadow)
-                SDivider()
+                //SToggle("Show Window Shadow", isOn: $hasShadow)
+                //SDivider()
                 SPicker("Maximum Refresh Rate", selection: $maxFps) {
                     Text("30 Hz").tag(30)
                     Text("60 Hz").tag(60)
                     Text("120 Hz").tag(120)
                     Text("No Limit").tag(65535)
+                }
+            }
+            SGroupBox {
+                SPicker("Control Button Position", selection: $buttonPosition) {
+                    Text("Top Leading").tag(0)
+                    Text("Top Trailing").tag(2)
+                    Text("Bottom Leading").tag(1)
+                    Text("Bottom Trailing").tag(3)
+                }
+                SDivider()
+                if #available(macOS 13, *) {
+                    SPicker("Control Button Style", selection: $splitButtons) {
+                        Text("Badge").tag(false)
+                        Text("Classic").tag(true)
+                    }
+                    if splitButtons {
+                        SDivider()
+                        SToggle("Show Close Button", isOn: $showCloseButton)
+                        SDivider()
+                        SToggle("Show Pause Button", isOn: $showPauseButton)
+                        SDivider()
+                        SToggle("Show Unpin Button", isOn: $showUnpinButton)
+                    }
+                } else {
+                    SToggle("Show Close Button", isOn: $showCloseButton)
+                    SDivider()
+                    SToggle("Show Pause Button", isOn: $showPauseButton)
+                    SDivider()
+                    SToggle("Show Unpin Button", isOn: $showUnpinButton)
                 }
             }
         }
@@ -120,8 +145,17 @@ struct WindowView: View {
 
 struct HotkeyView: View {
     var body: some View {
-        SForm {
+        SForm(spacing: 10) {
             SGroupBox(label: "Hotkey") {
+                SItem(label: "Select a Window to Pin") {
+                    KeyboardShortcuts.Recorder("", name: .selectWindow)
+                }
+                SDivider()
+                SItem(label: "Open Window Selector"){
+                    KeyboardShortcuts.Recorder("", name: .openMainPanel)
+                }
+            }
+            SGroupBox {
                 SItem(label: "Pin / Unpin Under-mouse Window") {
                     KeyboardShortcuts.Recorder("", name: .pinUnpin)
                 }
@@ -150,6 +184,8 @@ struct FilterView: View {
 }
 
 extension KeyboardShortcuts.Name {
+    static let selectWindow = Self("selectWindow")
+    static let openMainPanel = Self("openMainPanel")
     static let pinUnpin = Self("pinUnpin")
     static let unpinAll = Self("unpinAll")
 }

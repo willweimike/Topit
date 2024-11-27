@@ -27,29 +27,33 @@ struct ContentView: View {
                         openSettingPanel()
                     }, label: {
                         Image(systemName: "gear").font(.system(size: 14, weight: .medium))
-                    })
+                    }).help("Open Settings")
                     HoverButton(action: {
                         selected.removeAll()
                         viewModel.setupStreams()
                     }, label: {
                         Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 14, weight: .medium))
+                    }).help("Update Window List")
+                    HoverButton(action: {
+                        panel?.close()
+                        WindowHighlighter.shared.registerMouseMonitor()
+                    }, label: {
+                        Image("window.select")
+                            .resizable().scaledToFit()
+                            .frame(width: 20)
                     })
+                    .help("Select Window Directly")
                     Button(action: {
                         if let window = selected.first, let panel = panel {
-                            if singleLayer && isMacOS12 {
-                                let alert = createAlert(title: "Sorry", message: "You can only pin one window on macOS Monterey.", button1: "OK")
-                                alert.beginSheetModal(for: panel)
+                            _ = SCManager.updateAvailableContentSync()
+                            if SCManager.getWindows().contains(window) {
+                                createNewWindow(display: display, window: window)
+                                panel.close()
                             } else {
-                                _ = SCManager.updateAvailableContentSync()
-                                if SCManager.getWindows().contains(window) {
-                                    createNewWindow(display: display, window: window)
-                                    panel.close()
-                                } else {
-                                    let alert = createAlert(level: .critical, title: "Error", message: "This window is not available!", button1: "OK")
-                                    alert.beginSheetModal(for: panel) { _ in
-                                        selected.removeAll()
-                                        viewModel.setupStreams()
-                                    }
+                                let alert = createAlert(level: .critical, title: "Error", message: "This window is not available!", button1: "OK")
+                                alert.beginSheetModal(for: panel) { _ in
+                                    selected.removeAll()
+                                    viewModel.setupStreams()
                                 }
                             }
                         }
@@ -176,7 +180,7 @@ struct ContentView: View {
                     openSettingPanel()
                 }, label: {
                     Image(systemName: "gear").font(.system(size: 14, weight: .medium))
-                })
+                }).help("Open Settings")
             }
             ToolbarItem(placement: .automatic) {
                 HoverButton(action: {
@@ -184,7 +188,17 @@ struct ContentView: View {
                     viewModel.setupStreams()
                 }, label: {
                     Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 14, weight: .medium))
-                })
+                }).help("Update Window List")
+            }
+            ToolbarItem(placement: .automatic) {
+                HoverButton(action: {
+                    panel?.close()
+                    WindowHighlighter.shared.registerMouseMonitor()
+                }, label: {
+                    Image("window.select")
+                        .resizable().scaledToFit()
+                        .frame(width: 20)
+                }).help("Select Window Directly")
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button(action: {
