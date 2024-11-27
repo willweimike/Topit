@@ -14,9 +14,9 @@
                 <li>允许用户将"鼠标悬停时自动激活窗口"改为"左键单击激活窗口"</li>
                 <li>进一步优化性能, 降低内存使用率</li>
                 </ul><ul>
-                <li>Fixed: Some hotkeys don't work properly.</li>
-                <li>You can activate pinned windows using "Left Click" instead of "Mouse Hover".</li>
-                <li>Optimize performance and reduce memory usage.</li>
+                <li>Fixed: Some hotkeys don't work properly</li>
+                <li>You can activate pinned windows using "Left Click" instead of mouseover</li>
+                <li>Optimize performance and reduce memory usage</li>
                 </ul><img src="https://github.com/lihaoyun6/Topit/raw/main/img/donate.png" width="250"/>
             ]]></description>
             <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.3/Topit_v0.1.3.dmg" length="2258005" type="application/octet-stream" sparkle:edSignature="jBAGnu1kfgFxjM4IcXz9bP/y8AGZufrDKRX5wtevhR+MD/Kpn7XIG6tN2WKgxfbwOrgSTOwiuiVzCg+PnDRDCA=="/>
