@@ -3,6 +3,30 @@
     <channel>
         <title>Topit</title>
         <item>
+            <title>v0.1.4</title>
+            <pubDate>Sat, 30 Nov 2024 23:31:25 +0800</pubDate>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>0.1.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>12.3</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <style>ul{margin-top: 0;margin-bottom: 7;padding-left: 18;}</style><ul>
+                <li>支持调节置顶窗口的不透明度</li>
+                <li>添加了自动闪避功能, 可以修复多个置顶窗口发生重叠时的激活顺序问题</li>
+                <li>添加了新的快捷键, 修复了已知的其他问题</li>
+                </ul><ul>
+                <li>Supports adjusting the opacity of pinned windows.</li>
+                <li>Added "auto-ducking" to fix wrong window order when pinned windows overlap.</li>
+                <li>Added new hotkey and fixed other known issues.</li>
+                </ul><img src="https://github.com/lihaoyun6/Topit/raw/main/img/donate.png" width="250"/>
+            ]]></description>
+            <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.4/Topit_v0.1.4.dmg" length="2322384" type="application/octet-stream" sparkle:edSignature="RnLUHhdGftF9YVDAVZ1ATJ2IeO6pKJXZm5m4HxvSGLn9N0MWReS063o/JNABVaVABSYS7XZz91bVEt5ulECYAA=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.4/Update14-13.delta" sparkle:deltaFrom="13" length="323726" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="AXOYcqpG7tHJCntAz+suuCcR/CRmi0JCSN6lzyCYwyRpF/DhbSirba1cMo0ytcOqI6dlAwNqmRtejrkKTd63DA=="/>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.4/Update14-12.delta" sparkle:deltaFrom="12" length="333666" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="XLMR5wECPu46QgrmktGdEiE1mN8xHM3C6fyrHJ5UycJTyLIPf+zKU7aQkcHcrfYuSEDHbQ4K/UKXZlJxpT/WBw=="/>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.4/Update14-11.delta" sparkle:deltaFrom="11" length="399154" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="HxXbrCBLbwgY8qqLe3O3jDPn9o5TIxyFKNR8ur+2nW7mgsNAEp4bhdduKqmpDY+Em0DAiDF3F3ltb2TiCxvEBQ=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>v0.1.3</title>
             <pubDate>Thu, 28 Nov 2024 01:06:31 +0800</pubDate>
             <sparkle:version>13</sparkle:version>
