@@ -151,10 +151,7 @@ struct OverlayViewOpacity: View {
                                         setOpacity = true
                                     }) {
                                         HStack(spacing: 6) {
-                                            Image("opacity")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 15, height: 13)
+                                            Image(systemName: "circle.righthalf.filled")
                                             Text("Opacity").padding(.trailing, -11)
                                             Spacer()
                                         }
