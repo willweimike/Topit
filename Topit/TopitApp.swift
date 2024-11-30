@@ -18,7 +18,6 @@ var isMacOS13 = false
 var isMacOS12 = false
 var axPerm = false
 var scPerm = false
-var mainTimer: Timer?
 
 @main
 struct TopitApp: App {
@@ -84,29 +83,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             WindowHighlighter.shared.registerMouseMonitor()
         }
         KeyboardShortcuts.onKeyDown(for: .pinUnpin) {
-            getAllCGWindow()
-            if let window = getWindowUnderMouse(),
-               let windowID = window["kCGWindowNumber"] as? UInt32,
-               let app = window["kCGWindowOwnerName"] as? String, app != "Topit" {
-                if let _ = SCManager.updateAvailableContentSync(), let scDisplay = getSCDisplayWithMouse() {
-                    if SCManager.pinnedWdinwows.contains(where: { $0.windowID == windowID }) {
-                        for w in NSApp.windows.filter({ $0.title == "Topit Layer\(windowID)" }) { w.close() }
-                    } else {
-                        if let scWindow = SCManager.getWindows().first(where: { $0.windowID == windowID }) {
-                            closeMainWindow()
-                            createNewWindow(display: scDisplay, window: scWindow)
-                        }
-                    }
+            if let window = getWindowUnderMouse(), let windowID = window["kCGWindowNumber"] as? UInt32,
+               let scWindow = getSCWindowWithID(windowID), let scDisplay = getSCDisplayWithMouse() {
+                if SCManager.pinnedWdinwows.contains(scWindow) {
+                    for w in NSApp.windows.filter({
+                        $0.title == "Topit Layer\(windowID)"
+                        || $0.title == "Topit Layer\(windowID)O"
+                    }) { w.close() }
+                } else {
+                    closeMainWindow()
+                    createNewWindow(display: scDisplay, window: scWindow)
+                }
+            }
+        }
+        KeyboardShortcuts.onKeyDown(for: .pinUnpinTopmost) {
+            if let scWindow = getFrontmostWindow(), let scDisplay = getSCDisplayWithMouse() {
+                let windowID = scWindow.windowID
+                if SCManager.pinnedWdinwows.contains(scWindow) {
+                    for w in NSApp.windows.filter({
+                        $0.title == "Topit Layer\(windowID)"
+                        || $0.title == "Topit Layer\(windowID)O"
+                    }) { w.close() }
+                } else {
+                    closeMainWindow()
+                    createNewWindow(display: scDisplay, window: scWindow)
                 }
             }
         }
         
-        mainTimer = Timer(timeInterval: 0.1, repeats: true, block: { _ in self.loopFireHandler()})
-        if let timer = mainTimer { RunLoop.main.add(timer, forMode: .common) }
-        
         tips("Topit uses the accessibility permissions\nand screen recording permissions\nto control and capture your windows.".local, id: "topit.how-to-use.note")
         tips("macOS will prevent any notifications from appearing while Topit is running\nIt's not a bug or Topit's fault!".local, id: "topit.no-notifications.note")
-        
         scPerm = SCManager.updateAvailableContentSync() != nil
         axPerm = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeRetainedValue(): true] as NSDictionary)
     }
@@ -116,11 +122,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        if NSApp.windows.first(where: { $0.title == "Topit".local })?.isVisible != true {
+        if NSApp.windows.first(where: { $0.title == "Topit" })?.isVisible != true {
             axPerm = AXIsProcessTrusted()
             let mainPanel = NSWindow(contentRect: .zero, styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
             if axPerm && scPerm { mainPanel.level = .floating }
-            mainPanel.title = "Topit".local
+            mainPanel.title = "Topit"
             mainPanel.titlebarSeparatorStyle = .none
             mainPanel.titlebarAppearsTransparent = true
             mainPanel.isMovableByWindowBackground = true
@@ -133,15 +139,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
     
+    func applicationWillTerminate(_ notification: Notification) {
+        unPinAll()
+    }
+    
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
         let menu = NSMenu()
         menu.addItem(withTitle: "Pin a Window".local, action: #selector(selectWindowToPin), keyEquivalent: "")
         menu.addItem(withTitle: "Unpin all Windows".local, action: #selector(unPinAll), keyEquivalent: "")
         return menu
-    }
-    
-    @objc func loopFireHandler() {
-        if !SCManager.pinnedWdinwows.isEmpty || WindowHighlighter.shared.mouseMonitor != nil { getAllCGWindow() }
     }
     
     @objc func checkForUpdates() {

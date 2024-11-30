@@ -8,6 +8,11 @@
 import SwiftUI
 import ScreenCaptureKit
 
+class AvoidManager: ObservableObject {
+    static let shared = AvoidManager()
+    @Published var activedFrame: CGRect = .zero
+}
+
 class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStreamOutput {
     @AppStorage("maxFps") private var maxFps: Int = 65535
     
@@ -74,10 +79,12 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
         }
     }
     
-    func resumeCapture(newWidth: CGFloat, newHeight: CGFloat, screen: NSScreen? = nil) async {
+    func resumeCapture(newWidth: CGFloat, newHeight: CGFloat, screenID: CGDirectDisplayID? = nil) async {
         if stream != nil { return }
+        let screen = NSScreen.screens.first(where: { $0.displayID == screenID })
         updateStreamSize(newWidth: newWidth, newHeight: newHeight, screen: screen)
         do {
+            if stream != nil { return }
             stream = SCStream(filter: filter, configuration: configuration, delegate: self)
             try stream?.addStreamOutput(self, type: .screen, sampleHandlerQueue: .global())
             try await stream?.startCapture()
@@ -136,10 +143,9 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
 }
 
 class SCManager {
-    static var CGWindowList = [[String: Any]]()
     static var pinnedWdinwows = [SCWindow]()
     static var availableContent: SCShareableContent?
-    static private let excludedApps = ["", "com.apple.dock", "com.apple.screencaptureui", "com.apple.controlcenter", "com.apple.notificationcenterui", "com.apple.systemuiserver", "com.apple.WindowManager", "dev.mnpn.Azayaka", "com.gaosun.eul", "com.pointum.hazeover", "net.matthewpalmer.Vanilla", "com.dwarvesv.minimalbar", "com.bjango.istatmenus.status", "com.macpaw.CleanMyMac4"]
+    static private let excludedApps = ["", "com.apple.dock", "com.apple.screencaptureui", "com.apple.controlcenter", "com.apple.notificationcenterui", "com.apple.systemuiserver", "com.apple.WindowManager", "dev.mnpn.Azayaka", "com.gaosun.eul", "com.pointum.hazeover", "net.matthewpalmer.Vanilla", "com.dwarvesv.minimalbar", "com.bjango.istatmenus.status", "com.macpaw.CleanMyMac4", "com.lihaoyun6.Topit"]
     
     static func updateAvailableContentSync() -> SCShareableContent? {
         let semaphore = DispatchSemaphore(value: 0)
@@ -186,7 +192,7 @@ class SCManager {
            let decodedApps = try? JSONDecoder().decode([AppInfo].self, from: savedData) {
             appBlackList = (decodedApps as [AppInfo]).map({ $0.bundleID })
         }
-        appBlackList.append("Topit")
+        
         var windows = [SCWindow]()
         windows = content.windows.filter {
             guard let app = $0.owningApplication, let title = $0.title else { return false }
@@ -228,7 +234,7 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
         if let index = streams.firstIndex(of: stream), index + 1 <= allWindows.count {
             let currentWindow = allWindows[index]
             let thumbnail = WindowThumbnail(image: nsImage, window: currentWindow)
-            guard let displays = SCManager.availableContent?.displays.filter({ NSIntersectsRect(currentWindow.frame, $0.frame) }) else {
+            guard let displays = SCManager.availableContent?.displays.filter({ currentWindow.frame.intersects($0.frame) }) else {
                 self.streams[index].stopCapture()
                 return
             }
@@ -282,7 +288,7 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
                     } else {
                         for w in allWindows {
                             let thumbnail = WindowThumbnail(image: NSImage.unknowScreen, window: w)
-                            guard let displays = availableContent?.displays.filter({ NSIntersectsRect(w.frame, $0.frame) }) else { break }
+                            guard let displays = availableContent?.displays.filter({ w.frame.intersects($0.frame) }) else { break }
                             for d in displays {
                                 DispatchQueue.main.async {[self] in
                                     if windowThumbnails[d] != nil {

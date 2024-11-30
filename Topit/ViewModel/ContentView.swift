@@ -168,8 +168,7 @@ struct ContentView: View {
         .onReceive(viewModel.$isReady) { isReady in
             if isReady {
                 let allApps = viewModel.windowThumbnails.sorted(by: { $0.key.displayID < $1.key.displayID })
-                if let s = NSApp.windows.first(where: { $0.title == "Topit".local })?.screen,
-                   let index = allApps.firstIndex(where: { $0.key.displayID == s.displayID }) {
+                if let s = panel?.screen, let index = allApps.firstIndex(where: { $0.key.displayID == s.displayID }) {
                     selectedTab = index
                 }
             }
@@ -227,5 +226,25 @@ struct ContentView: View {
                 .disabled(selected.isEmpty)
             }
         }
+    }
+}
+
+struct BlurView: NSViewRepresentable {
+    private let material: NSVisualEffectView.Material
+    
+    init(material: NSVisualEffectView.Material) {
+        self.material = material
+    }
+    
+    func makeNSView(context: Context) -> some NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSViewType, context: Context) {
+        nsView.material = material
     }
 }

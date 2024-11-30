@@ -27,10 +27,9 @@ struct HighlightMask: View {
             .onPressGesture {
                 if let mask = WindowHighlighter.shared.mask {
                     mask.order(.above, relativeTo: windowID)
-                    if let _ = SCManager.updateAvailableContentSync(),
-                       let window = SCManager.getWindows().first(where: { $0.windowID == windowID }),
+                    if let window = getSCWindowWithID(UInt32(windowID)),
                        !SCManager.pinnedWdinwows.contains(window),
-                       let display = SCManager.availableContent?.displays.first(where: { $0.displayID == mask.screen?.displayID }) {
+                       let display = getSCDisplayWithMouse() {
                         mask.close()
                         createNewWindow(display: display, window: window)
                         WindowHighlighter.shared.stopMouseMonitor()
@@ -66,8 +65,6 @@ class WindowHighlighter {
             cover.orderFront(self)
         }
         
-        getAllCGWindow()
-        
         if mouseMonitor == nil {
             mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { _ in self.updateMask() }
         }
@@ -100,19 +97,21 @@ class WindowHighlighter {
             return
         }
         
-        if let windowID = targetWindow["kCGWindowNumber"] as? Int,
-           let app = targetWindow["kCGWindowOwnerName"] as? String, app != "Topit",
-           let frame = getCGWindowFrame(window: targetWindow), targetWindowID != windowID {
+        if let app = targetWindow["kCGWindowOwnerName"] as? String, app != "Topit",
+           let windowID = targetWindow["kCGWindowNumber"] as? Int, targetWindowID != windowID {
             mask?.close()
             targetWindowID = windowID
-            let title = targetWindow["kCGWindowName"] as? String ?? ""
-            createMaskWindow(app: app, title: title, frame: frame)
+            createMaskWindow(window: targetWindow)
         }
     }
     
-    func createMaskWindow(app: String, title: String, frame: CGRect) {
-        guard let windowID = targetWindowID else { return }
-        mask = EscPanel(contentRect: CGRectTransform(cgRect: frame), styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
+    func createMaskWindow(window: [String: Any]) {
+        guard let windowID = targetWindowID, let frame = getCGWindowFrame(window: window) else { return }
+        let app = window["kCGWindowOwnerName"] as? String ?? ""
+        let title = window["kCGWindowName"] as? String ?? ""
+        
+        mask = EscPanel(contentRect: CGRectTransform(cgRect: frame),
+                        styleMask: [.nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
         let contentView = NSHostingView(rootView: HighlightMask(app: app, title: title, windowID: windowID))
         mask?.contentView = contentView
         mask?.title = "Topit Mask Window"

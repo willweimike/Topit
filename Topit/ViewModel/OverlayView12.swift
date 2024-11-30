@@ -15,7 +15,7 @@ struct OverlayView12: View {
     var display: SCDisplay!
     var window: SCWindow!
     @State private var timer: Timer?
-    @StateObject private var captureManager = ScreenCaptureManager()
+    @StateObject private var cm = ScreenCaptureManager()
     @State private var opacity: Double = 1
     @State private var overButtons: Bool = false
     @State private var overView: Bool = false
@@ -28,6 +28,7 @@ struct OverlayView12: View {
     @AppStorage("showCloseButton") private var showCloseButton: Bool = true
     @AppStorage("showUnpinButton") private var showUnpinButton: Bool = true
     @AppStorage("mouseOverAction") private var mouseOverAction: Bool = true
+    @AppStorage("keepFocus") private var keepFocus: Bool = true
     @AppStorage("miniButton") private var miniButton: Bool = true
     @AppStorage("buttonPosition") private var buttonPosition: Int = 0
     
@@ -37,7 +38,7 @@ struct OverlayView12: View {
             vertical: buttonPosition % 2 == 0 ? .top : .bottom
         )) {
             Group {
-                ScreenCaptureView(manager: captureManager)
+                ScreenCaptureView(manager: cm)
                     .frame(width: windowSize.width, height: windowSize.height)
                     .background(
                         WindowAccessor(
@@ -45,7 +46,7 @@ struct OverlayView12: View {
                                 nsWindow = w
                                 SCManager.pinnedWdinwows.append(window)
                                 if let w = nsWindow {
-                                    nsWindow?.makeKeyAndOrderFront(self)
+                                    w.makeKeyAndOrderFront(self)
                                     checkMouseLocation()
                                     if SCManager.pinnedWdinwows.count > 1 && isMacOS12 {
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -59,14 +60,14 @@ struct OverlayView12: View {
                                 SCManager.pinnedWdinwows.removeAll(where: { $0 === window })
                                 timer?.invalidate()
                                 nsWindow = nil
-                                captureManager.stopCapture()
+                                cm.stopCapture()
                             }
                         )
                     )
                     .onTapGesture {
                         if !mouseOverAction {
                             if let id = window.owningApplication?.bundleIdentifier, let win = nsWindow {
-                                activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame, display: display))
+                                activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame))
                                 NSApp.activate(ignoringOtherApps: true)
                                 bringAppToFront(bundleIdentifier: id)
                                 withAnimation(.easeOut(duration: 0.1)) { opacity = 0 }
@@ -127,16 +128,16 @@ struct OverlayView12: View {
             windowSize = window.frame.size
             timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
                 if let frame = getCGWindowFrameWithID(window.windowID) {
-                    let newFrame = CGRectTransform(cgRect: frame, display: display)
+                    let newFrame = CGRectTransform(cgRect: frame)
                     if newFrame != nsWindow?.frame {
                         opacity = 0
                         resizing = true
                         let newDisplay = nsWindow?.screen
                         if newFrame.size != nsWindow?.frame.size || nsScreen != newDisplay {
                             nsScreen = newDisplay
-                            captureManager.updateStreamSize(newWidth: frame.width, newHeight: frame.height, screen: newDisplay)
+                            cm.updateStreamSize(newWidth: frame.width, newHeight: frame.height, screen: newDisplay)
                         }
-                        nsWindow?.setFrame(CGRectTransform(cgRect: frame, display: display), display: true)
+                        nsWindow?.setFrame(CGRectTransform(cgRect: frame), display: true)
                         windowSize = frame.size
                     } else {
                         if !overView { opacity = 1 }
@@ -146,9 +147,9 @@ struct OverlayView12: View {
                 checkMouseLocation()
             }
             axWindow = getAXWindow(windowID: window.windowID)
-            Task { await captureManager.startCapture(display: display, window: window) }
+            Task { await cm.startCapture(display: display, window: window) }
         }
-        .onChange(of: captureManager.capturing) { newValue in if !newValue { nsWindow?.close() }}
+        .onChange(of: cm.capturing) { newValue in if !newValue { nsWindow?.close() }}
         .onChange(of: opacity) { newValue in
             if newValue == 1 { nsWindow?.hasShadow = true } else { nsWindow?.hasShadow = false }
         }
@@ -160,10 +161,10 @@ struct OverlayView12: View {
         let mouseInWindow = windowFrame.contains(NSPoint(x: mouseLocation.x, y: mouseLocation.y))
         if resizing { return }
         if mouseInWindow {
-            nsWindow?.makeKeyAndOrderFront(self)
+            if !keepFocus || mouseOverAction { nsWindow?.makeKeyAndOrderFront(self) }
             if overView == mouseInWindow || !mouseOverAction { return }
             if let id = window.owningApplication?.bundleIdentifier, let win = nsWindow {
-                activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame, display: display))
+                activateWindow(axWindow: axWindow, frame: CGRectTransform(cgRect: win.frame))
                 NSApp.activate(ignoringOtherApps: true)
                 bringAppToFront(bundleIdentifier: id)
                 withAnimation(.easeOut(duration: 0.1)) { opacity = 0 }

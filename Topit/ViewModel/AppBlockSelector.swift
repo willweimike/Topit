@@ -64,7 +64,6 @@ struct BundleSelector: View {
 struct AppInfo: Hashable, Codable {
     let bundleID: String
     let displayName: String
-
 }
 
 extension Bundle {

@@ -111,6 +111,7 @@ struct SInfoButton: View {
                 .opacity(0.5)
         })
         .buttonStyle(.plain)
+        .onChange(of: isPresented) {_ in}
         .sheet(isPresented: $isPresented) {
             VStack(alignment: .trailing) {
                 GroupBox { Text(tips).padding() }
