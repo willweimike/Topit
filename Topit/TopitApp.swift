@@ -50,6 +50,7 @@ struct TopitApp: App {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    static let shared = AppDelegate()
     @AppStorage("showOnDock") private var showOnDock: Bool = true
     @AppStorage("showMenubar") private var showMenubar: Bool = true
     
@@ -75,41 +76,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusBarItem.isVisible = showMenubar
         
         KeyboardShortcuts.onKeyDown(for: .unpinAll) { self.unPinAll() }
-        KeyboardShortcuts.onKeyDown(for: .openMainPanel) {
-            _ = self.applicationShouldHandleReopen(NSApp, hasVisibleWindows: false)
-        }
-        KeyboardShortcuts.onKeyDown(for: .selectWindow) {
-            closeMainWindow()
-            WindowHighlighter.shared.registerMouseMonitor()
-        }
-        KeyboardShortcuts.onKeyDown(for: .pinUnpin) {
-            if let window = getWindowUnderMouse(), let windowID = window["kCGWindowNumber"] as? UInt32,
-               let scWindow = getSCWindowWithID(windowID), let scDisplay = getSCDisplayWithMouse() {
-                if SCManager.pinnedWdinwows.contains(scWindow) {
-                    for w in NSApp.windows.filter({
-                        $0.title == "Topit Layer\(windowID)"
-                        || $0.title == "Topit Layer\(windowID)O"
-                    }) { w.close() }
-                } else {
-                    closeMainWindow()
-                    createNewWindow(display: scDisplay, window: scWindow)
-                }
-            }
-        }
-        KeyboardShortcuts.onKeyDown(for: .pinUnpinTopmost) {
-            if let scWindow = getFrontmostWindow(), let scDisplay = getSCDisplayWithMouse() {
-                let windowID = scWindow.windowID
-                if SCManager.pinnedWdinwows.contains(scWindow) {
-                    for w in NSApp.windows.filter({
-                        $0.title == "Topit Layer\(windowID)"
-                        || $0.title == "Topit Layer\(windowID)O"
-                    }) { w.close() }
-                } else {
-                    closeMainWindow()
-                    createNewWindow(display: scDisplay, window: scWindow)
-                }
-            }
-        }
+        KeyboardShortcuts.onKeyDown(for: .openMainPanel) { _ = self.applicationShouldHandleReopen(NSApp, hasVisibleWindows: false) }
+        KeyboardShortcuts.onKeyDown(for: .selectWindow) { WindowHighlighter.shared.registerMouseMonitor() }
+        KeyboardShortcuts.onKeyDown(for: .pinUnpin) { pnpUnderMouseWindow() }
+        KeyboardShortcuts.onKeyDown(for: .pinUnpinTopmost) { pnpFrontmostWindow() }
         
         tips("Topit uses the accessibility permissions\nand screen recording permissions\nto control and capture your windows.".local, id: "topit.how-to-use.note")
         tips("macOS will prevent any notifications from appearing while Topit is running\nIt's not a bug or Topit's fault!".local, id: "topit.no-notifications.note")
@@ -157,6 +127,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func unPinAll() {
         DispatchQueue.main.async {
             for layer in NSApp.windows.filter({$0.title.hasPrefix("Topit Layer")}) { layer.close() }
+            AvoidManager.shared.activedFrame = .zero
         }
     }
     
@@ -173,8 +144,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func selectWindowToPin() {
-        closeMainWindow()
         WindowHighlighter.shared.registerMouseMonitor()
+    }
+}
+
+func pnpUnderMouseWindow() {
+    if let window = getWindowUnderMouse(), let windowID = window["kCGWindowNumber"] as? UInt32,
+       let scWindow = getSCWindowWithID(windowID, noFilter: true), let scDisplay = getSCDisplayWithMouse() {
+        if SCManager.pinnedWdinwows.contains(scWindow) {
+            for w in NSApp.windows.filter({
+                $0.title == "Topit Layer\(windowID)"
+                || $0.title == "Topit Layer\(windowID)O"
+            }) { w.close() }
+        } else {
+            closeMainWindow()
+            createNewWindow(display: scDisplay, window: scWindow)
+        }
+    }
+}
+
+func pnpFrontmostWindow() {
+    if let scWindow = getFrontmostWindow(), let scDisplay = getSCDisplayWithMouse() {
+        let windowID = scWindow.windowID
+        if SCManager.pinnedWdinwows.contains(scWindow) {
+            for w in NSApp.windows.filter({
+                $0.title == "Topit Layer\(windowID)"
+                || $0.title == "Topit Layer\(windowID)O"
+            }) { w.close() }
+        } else {
+            closeMainWindow()
+            createNewWindow(display: scDisplay, window: scWindow)
+        }
     }
 }
 
@@ -225,6 +225,7 @@ func createAlert(level: NSAlert.Style = .warning, title: String, message: String
 }
 
 func openSettingPanel() {
+    closeMainWindow()
     NSApp.activate(ignoringOtherApps: true)
     if #available(macOS 14, *) {
         NSApp.mainMenu?.items.first?.submenu?.item(at: 3)?.performAction()

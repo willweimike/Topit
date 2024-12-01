@@ -135,7 +135,7 @@ class ScreenCaptureManager: NSObject, ObservableObject, SCStreamDelegate, SCStre
                 self.videoLayer = AVSampleBufferDisplayLayer()
                 if let error = error {
                     print("Failed to stop capture: \(error)")
-                    self.capturError = true
+                    //self.capturError = true
                 }
             }
         }
@@ -185,7 +185,7 @@ class SCManager {
         }
     }
     
-    static func getWindows() -> [SCWindow] {
+    static func getWindows(noFilter: Bool = false) -> [SCWindow] {
         guard let content = availableContent else { return [] }
         var appBlackList = [String]()
         if let savedData = ud.data(forKey: "hiddenApps"),
@@ -194,15 +194,15 @@ class SCManager {
         }
         
         var windows = [SCWindow]()
-        windows = content.windows.filter {
+        windows = content.windows.filter({
             guard let app = $0.owningApplication, let title = $0.title else { return false }
             return !excludedApps.contains(app.bundleIdentifier)
             && !appBlackList.contains(app.bundleIdentifier)
             && !title.contains("Item-0")
-            && !pinnedWdinwows.contains($0)
             && $0.frame.width > 40
             && $0.frame.height > 40
-        }
+        })
+        if !noFilter { windows = windows.filter({ !pinnedWdinwows.contains($0) }) }
         return windows
     }
 }
@@ -215,9 +215,7 @@ class WindowSelectorViewModel: NSObject, ObservableObject, SCStreamDelegate, SCS
     
     override init() {
         super.init()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.setupStreams()
-        }
+        //DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { self.setupStreams(filter: filter) }
     }
     
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {

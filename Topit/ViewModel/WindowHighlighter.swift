@@ -50,6 +50,7 @@ class WindowHighlighter {
     var mask: EscPanel?
     
     func registerMouseMonitor() {
+        closeMainWindow()
         DispatchQueue.main.async { tips("Click on the window you want to pin\nor press Esc to cancel.".local, id: "topit.how-to-select.note") }
         
         for screen in NSScreen.screens {

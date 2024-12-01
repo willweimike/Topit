@@ -46,7 +46,6 @@ struct OverlayView: View {
     @State private var overButtons: Bool = false
     @State private var overView: Bool = false
     @State private var resizing: Bool = false
-    @State private var needAvoid: Bool = false
     @State private var showPopover: Bool = false
     @State private var nsWindow: NSWindow?
     @State private var nsScreen: NSScreen?
@@ -85,6 +84,9 @@ struct OverlayView: View {
                             },
                             onWindowClose: {
                                 SCManager.pinnedWdinwows.removeAll(where: { $0 === window })
+                                if let w = nsWindow, am.activedFrame == w.frame {
+                                    am.activedFrame = .zero
+                                }
                                 timer?.invalidate()
                                 nsWindow = nil
                                 stopCapture()
@@ -101,7 +103,7 @@ struct OverlayView: View {
                             stopCapture()
                         }
                     }
-            }.opacity(needAvoid ? 0 : opacity)
+            }.opacity(opacity)
             if !resizing {
                 VStack(alignment: buttonPosition < 2 ? .leading : .trailing) {
                     if buttonPosition % 2 == 0 {
@@ -288,11 +290,14 @@ struct OverlayView: View {
             if !autoAvoid { return }
             if let w = nsWindow, newValue != .zero, newValue != w.frame {
                 if newValue.intersects(w.frame) {
-                    needAvoid = true
+                    pausing = true
+                    nsWindow?.level = .normal
+                    nsWindow?.order(.above, relativeTo: Int(window.windowID))
                     return
                 }
             }
-            needAvoid = false
+            pausing = false
+            nsWindow?.level = .floating
         }
         .onChange(of: showPopover) { newValue in if !newValue { setOpacity = false }}
         .onChange(of: cm.capturError) { newValue in if newValue { nsWindow?.close() }}

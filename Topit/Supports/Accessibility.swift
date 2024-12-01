@@ -14,10 +14,10 @@ func getScreenWithMouse() -> NSScreen? {
     return screenWithMouse
 }
 
-func getSCWindowWithID(_ windowID: UInt32?) -> SCWindow? {
+func getSCWindowWithID(_ windowID: UInt32?, noFilter: Bool = false) -> SCWindow? {
     guard let windowID else { return nil }
     _ = SCManager.updateAvailableContentSync()
-    let windows = SCManager.getWindows()
+    let windows = SCManager.getWindows(noFilter: noFilter)
     return windows.first(where: { $0.windowID == windowID })
 }
 
@@ -103,8 +103,19 @@ func getAllCGWindows() -> [[String: Any]]? {
 
 func getFrontmostWindow() -> SCWindow? {
     guard let appID = NSWorkspace.shared.frontmostApplication?.processIdentifier else { return nil }
-    guard let cgWindow = getAllCGWindows()?.first(where: { $0["kCGWindowOwnerPID"] as? pid_t == appID }) else { return nil }
-    return getSCWindowWithID(cgWindow["kCGWindowNumber"] as? UInt32)
+    guard var windowList = getAllCGWindows() else { return nil }
+    
+    windowList = windowList.filter({
+        guard let frame = getCGWindowFrame(window: $0) else { return false }
+        return $0["kCGWindowOwnerPID"] as? pid_t == appID
+        && $0["kCGWindowAlpha"] as? NSNumber != 0
+        && $0["kCGWindowLayer"] as? NSNumber == 0
+        && frame.width > 40 && frame.height > 40
+    })
+    if let window = windowList.first {
+        return getSCWindowWithID(window["kCGWindowNumber"] as? UInt32, noFilter: true)
+    }
+    return nil
 }
 
 func isFrontmostWindow(appID: pid_t?, windowID: UInt32) -> Bool {

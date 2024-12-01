@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var sheeting: Bool = false
     @State private var overQuit: Bool = true
     @State private var panel: NSWindow?
+    @AppStorage("noTitle") var noTitle = true
     
     var body: some View {
         VStack(spacing: 0) {
@@ -30,12 +31,12 @@ struct ContentView: View {
                     }).help("Open Settings")
                     HoverButton(action: {
                         selected.removeAll()
-                        viewModel.setupStreams()
+                        viewModel.setupStreams(filter: !noTitle)
                     }, label: {
                         Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 14, weight: .medium))
                     }).help("Update Window List")
                     HoverButton(action: {
-                        panel?.close()
+                        //panel?.close()
                         WindowHighlighter.shared.registerMouseMonitor()
                     }, label: {
                         Image("window.select")
@@ -53,7 +54,7 @@ struct ContentView: View {
                                 let alert = createAlert(level: .critical, title: "Error", message: "This window is not available!", button1: "OK")
                                 alert.beginSheetModal(for: panel) { _ in
                                     selected.removeAll()
-                                    viewModel.setupStreams()
+                                    viewModel.setupStreams(filter: !noTitle)
                                 }
                             }
                         }
@@ -163,8 +164,15 @@ struct ContentView: View {
         .padding([.horizontal, .bottom], 10)
         .padding(.top, 0.5)
         .padding(.top, isMacOS12 || isMacOS13 ? -20 : 0)
-        .onChange(of: selectedTab) { _ in selected.removeAll() }
         .background(WindowAccessor(onWindowOpen: { w in panel = w }))
+        .onAppear { viewModel.setupStreams(filter: !noTitle) }
+        .onChange(of: selectedTab) { _ in selected.removeAll() }
+        .onChange(of: noTitle) { newValue in
+            if let p = panel, p.isVisible {
+                selected.removeAll()
+                viewModel.setupStreams(filter: !noTitle)
+            }
+        }
         .onReceive(viewModel.$isReady) { isReady in
             if isReady {
                 let allApps = viewModel.windowThumbnails.sorted(by: { $0.key.displayID < $1.key.displayID })
@@ -184,14 +192,14 @@ struct ContentView: View {
             ToolbarItem(placement: .automatic) {
                 HoverButton(action: {
                     selected.removeAll()
-                    viewModel.setupStreams()
+                    viewModel.setupStreams(filter: !noTitle)
                 }, label: {
                     Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 14, weight: .medium))
                 }).help("Update Window List")
             }
             ToolbarItem(placement: .automatic) {
                 HoverButton(action: {
-                    panel?.close()
+                    //panel?.close()
                     WindowHighlighter.shared.registerMouseMonitor()
                 }, label: {
                     Image("window.select")
@@ -210,7 +218,7 @@ struct ContentView: View {
                             let alert = createAlert(level: .critical, title: "Error", message: "This window is not available!", button1: "OK")
                             alert.beginSheetModal(for: panel) { _ in
                                 selected.removeAll()
-                                viewModel.setupStreams()
+                                viewModel.setupStreams(filter: noTitle)
                             }
                         }
                     }
