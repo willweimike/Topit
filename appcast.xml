@@ -3,6 +3,30 @@
     <channel>
         <title>Topit</title>
         <item>
+            <title>v0.1.5</title>
+            <pubDate>Sun, 01 Dec 2024 23:09:26 +0800</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>0.1.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>12.3</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <style>ul{margin-top: 0;margin-bottom: 7;padding-left: 18;}</style><ul>
+                <li>修复了部分快捷键工作不正常的问题.</li>
+                <li>添加了 AppleScript 支持, 可以通过脚本调用.</li>
+                <li>改进了自动闪避功能, 进一步提升使用体验.</li>
+                </ul><ul>
+                <li>Fixed: Some hotkeys didn't work properly.</li>
+                <li>Added: AppleScript support, you can call Topit through scripts.</li>
+                <li>Improved auto-ducking to make it work better.</li>
+                </ul><img src="https://github.com/lihaoyun6/Topit/raw/main/img/donate.png" width="260"/>
+            ]]></description>
+            <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.5/Topit_v0.1.5.dmg" length="2342454" type="application/octet-stream" sparkle:edSignature="f63/c1aLlNivGtTAKYMlS4L7RlYOB6JX9JMwfLV+nNiSBxegKbQObJ3Gi6O/co50UHPOj93H9Pxd3UH0vL4BCg=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.5/Update15-14.delta" sparkle:deltaFrom="14" length="212010" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="ubNmNYVXfCEwbdTW+lHDpzLxQQGjKlqaPjJrVL7V7Sg9VEbTWksk8pEOPuawspiiOvwB/ZEB7SNFzomrUH93Ag=="/>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.5/Update15-13.delta" sparkle:deltaFrom="13" length="350374" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="cbTmicogl8yrlopypz74PxsrK2gx5gfsQA6gsefQnw8R+Hf4OdHbQ0NFiWJaLCBfbfZL0Gv4rUU30zqGCkfmDQ=="/>
+                <enclosure url="https://github.com/lihaoyun6/Topit/releases/download/0.1.5/Update15-12.delta" sparkle:deltaFrom="12" length="359874" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864752" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="8pLG7OOLfhb1UrEHphsONF0zwvCuJeT0Nzb3y8cxjefKHEMKbWn6oWoZ8FtcSVSxRly5UC9GQYtsLtgclKlYAg=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>v0.1.4</title>
             <pubDate>Sat, 30 Nov 2024 23:31:25 +0800</pubDate>
             <sparkle:version>14</sparkle:version>
