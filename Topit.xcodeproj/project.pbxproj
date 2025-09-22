@@ -10,7 +10,6 @@
 		D601C47F2E80EFF2005BEF90 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = D601C47E2E80EFF2005BEF90 /* KeyboardShortcuts */; };
 		D641445E2E80ECC90075D8D2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64144592E80ECC90075D8D2 /* ContentView.swift */; };
 		D641445F2E80ECC90075D8D2 /* OverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D641445A2E80ECC90075D8D2 /* OverlayView.swift */; };
-		D64144602E80ECC90075D8D2 /* OverlayView12.swift in Sources */ = {isa = PBXBuildFile; fileRef = D641445B2E80ECC90075D8D2 /* OverlayView12.swift */; };
 		D64144612E80ECC90075D8D2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D641445C2E80ECC90075D8D2 /* SettingsView.swift */; };
 		D64144622E80ECC90075D8D2 /* AppBlockSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = D641445D2E80ECC90075D8D2 /* AppBlockSelector.swift */; };
 		D64144672E80ECE10075D8D2 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D64144632E80ECE10075D8D2 /* Localizable.strings */; };
@@ -30,7 +29,6 @@
 /* Begin PBXFileReference section */
 		D64144592E80ECC90075D8D2 /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D641445A2E80ECC90075D8D2 /* OverlayView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayView.swift; sourceTree = "<group>"; };
-		D641445B2E80ECC90075D8D2 /* OverlayView12.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverlayView12.swift; sourceTree = "<group>"; };
 		D641445C2E80ECC90075D8D2 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D641445D2E80ECC90075D8D2 /* AppBlockSelector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppBlockSelector.swift; sourceTree = "<group>"; };
 		D64144642E80ECE10075D8D2 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
@@ -96,7 +94,6 @@
 				D641445D2E80ECC90075D8D2 /* AppBlockSelector.swift */,
 				D64144592E80ECC90075D8D2 /* ContentView.swift */,
 				D641445A2E80ECC90075D8D2 /* OverlayView.swift */,
-				D641445B2E80ECC90075D8D2 /* OverlayView12.swift */,
 				D641445C2E80ECC90075D8D2 /* SettingsView.swift */,
 			);
 			path = ViewModel;
@@ -231,7 +228,6 @@
 				D641445F2E80ECC90075D8D2 /* OverlayView.swift in Sources */,
 				D64144722E80ED030075D8D2 /* GroupForm.swift in Sources */,
 				D641445E2E80ECC90075D8D2 /* ContentView.swift in Sources */,
-				D64144602E80ECC90075D8D2 /* OverlayView12.swift in Sources */,
 				D64144712E80ED030075D8D2 /* SCManager.swift in Sources */,
 				D64144732E80ED030075D8D2 /* Accessibility.swift in Sources */,
 				D693E4222E80EB4A00503CBA /* TopitApp.swift in Sources */,

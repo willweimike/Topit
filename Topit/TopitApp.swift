@@ -13,9 +13,6 @@ import KeyboardShortcuts
 
 let ud = UserDefaults.standard
 let statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-var isMacOS13 = false
-var isMacOS12 = false
 var singleLayer = false
 var axPerm = false
 var scPerm = false
@@ -55,8 +52,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @AppStorage("showMenubar") private var showMenubar: Bool = true
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        if #unavailable(macOS 14) { isMacOS13 = true }
-        if #unavailable(macOS 13) { isMacOS12 = true }
         if showOnDock { NSApp.setActivationPolicy(.regular) }
         if let button = statusBarItem.button {
             button.target = self

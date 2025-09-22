@@ -20,52 +20,6 @@ struct ContentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            if isMacOS12 || isMacOS13 {
-                HStack {
-                    Spacer()
-                    HoverButton(action: {
-                        openSettingPanel()
-                    }, label: {
-                        Image(systemName: "gear").font(.system(size: 14, weight: .medium))
-                    })
-                    HoverButton(action: {
-                        selected.removeAll()
-                        viewModel.setupStreams()
-                    }, label: {
-                        Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 14, weight: .medium))
-                    })
-                    Button(action: {
-                        if let window = selected.first, let panel = panel {
-                            if singleLayer && isMacOS12 {
-                                let alert = createAlert(title: "Sorry", message: "You can only pin one window on macOS Monterey.", button1: "OK")
-                                alert.beginSheetModal(for: panel)
-                            } else {
-                                _ = SCManager.updateAvailableContentSync()
-                                if SCManager.getWindows().contains(window) {
-                                    createNewWindow(display: display, window: window)
-                                    panel.close()
-                                } else {
-                                    let alert = createAlert(level: .critical, title: "Error", message: "This window is not available!", button1: "OK")
-                                    alert.beginSheetModal(for: panel) { _ in
-                                        selected.removeAll()
-                                        viewModel.setupStreams()
-                                    }
-                                }
-                            }
-                        }
-                    }, label: {
-                        Text(" Topit! ")
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .foregroundStyle(.white)
-                            .background(selected.isEmpty ? Color.secondary.opacity(0.5) : .blue)
-                            .cornerRadius(5)
-                    })
-                    .buttonStyle(.plain)
-                    .disabled(selected.isEmpty)
-                    .padding(.leading, 2)
-                }
-            }
             TabView(selection: $selectedTab) {
                 let allApps = viewModel.windowThumbnails.sorted(by: { $0.key.displayID < $1.key.displayID })
                 ForEach(allApps, id: \.key) { element in
@@ -158,7 +112,7 @@ struct ContentView: View {
         .frame(width: 728, height: 500)
         .padding([.horizontal, .bottom], 10)
         .padding(.top, 0.5)
-        .padding(.top, isMacOS12 || isMacOS13 ? -20 : 0)
+        .padding(.top, 0)
         .onChange(of: selectedTab) { _ in selected.removeAll() }
         .background(WindowAccessor(onWindowOpen: { w in panel = w }))
         .onReceive(viewModel.$isReady) { isReady in

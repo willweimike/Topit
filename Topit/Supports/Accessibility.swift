@@ -44,11 +44,8 @@ func createNewWindow(display: SCDisplay, window: SCWindow) {
     
     let panel = NNSPanel(contentRect: CGRectTransform(cgRect: window.frame, display: display), styleMask: [.closable, .nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)
     var contentView: NSView!
-    if #unavailable(macOS 13) {
-        contentView = NSHostingView(rootView: OverlayView12(display: display, window: window))
-    } else {
-        contentView = NSHostingView(rootView: OverlayView(display: display, window: window))
-    }
+    contentView = NSHostingView(rootView: OverlayView(display: display, window: window))
+    
     panel.contentView = contentView
     panel.title = "Topit Layer\(window.windowID)"
     panel.level = .floating
